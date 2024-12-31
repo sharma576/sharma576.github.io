@@ -1,2 +1,2 @@
 # sharma576.github.io
-sorryPage
+githubPages usage
