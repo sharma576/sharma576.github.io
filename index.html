@@ -61,7 +61,7 @@
                         console.warn("❌ GPS denied, using IP location instead.");
                         callback(null); // Fallback to IP-based location
                     },
-                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
                 );
             } else {
                 console.warn("❌ GPS not supported.");
