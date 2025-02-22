@@ -1,64 +1,51 @@
-const CACHE_NAME = "location-cache-v1";
+importScripts("https://cdnjs.cloudflare.com/ajax/libs/idb/7.1.1/idb.min.js");
+
+// Open IndexedDB
+const dbPromise = idb.openDB("location-db", 1, {
+    upgrade(db) {
+        if (!db.objectStoreNames.contains("locations")) {
+            db.createObjectStore("locations", { keyPath: "cacheID" });
+        }
+    }
+});
 
 // Install Service Worker
-self.addEventListener("install", event => {
-    event.waitUntil(
-        caches.open(CACHE_NAME).then(cache => {
-            return cache.addAll(["/", "/index.html"]);
-        })
-    );
+self.addEventListener("install", (event) => {
     console.log("✅ Service Worker Installed");
+    self.skipWaiting();
 });
 
-// Fetch Event - Serve from Cache
-self.addEventListener("fetch", event => {
-    event.respondWith(
-        caches.match(event.request).then(response => {
-            return response || fetch(event.request);
-        })
-    );
+// Activate Service Worker
+self.addEventListener("activate", (event) => {
+    console.log("🚀 Service Worker Activated");
+    self.clients.claim();
 });
 
-// Background Sync for Location
-self.addEventListener("sync", event => {
-    if (event.tag === "send-location") {
-        event.waitUntil(sendLocationData());
+// Listen for Sync Event
+self.addEventListener("sync", (event) => {
+    if (event.tag === "sync-locations") {
+        event.waitUntil(syncLocationData());
     }
 });
 
-// Send Location Data to Server
-async function sendLocationData() {
-    let location = await getGPSLocation();
-    if (location) {
-        fetch("https://firestore.googleapis.com/v1/projects/locationsaver-b9997/databases/(default)/documents/user_data", {
+// Function to Sync Cached Data
+async function syncLocationData() {
+    const db = await dbPromise;
+    const tx = db.transaction("locations", "readonly");
+    const store = tx.objectStore("locations");
+    const allData = await store.getAll();
+
+    for (let data of allData) {
+        await fetch("/sync", {
             method: "POST",
-            body: JSON.stringify(location),
-            headers: { "Content-Type": "application/json" }
-        }).then(() => {
-            console.log("✅ Location sent in background");
-        }).catch(error => {
-            console.error("❌ Failed to send location:", error);
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
         });
-    }
-}
 
-// Function to get GPS location
-function getGPSLocation() {
-    return new Promise((resolve, reject) => {
-        if ("geolocation" in navigator) {
-            navigator.geolocation.getCurrentPosition(position => {
-                resolve({
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude,
-                    time: new Date().toISOString()
-                });
-            }, () => {
-                console.warn("❌ GPS Denied");
-                resolve(null);
-            });
-        } else {
-            console.warn("❌ GPS Not Supported");
-            resolve(null);
-        }
-    });
+        // Remove from IndexedDB after syncing
+        const deleteTx = db.transaction("locations", "readwrite");
+        const deleteStore = deleteTx.objectStore("locations");
+        await deleteStore.delete(data.cacheID);
+        console.log("✅ Synced & Deleted from DB:", data.cacheID);
+    }
 }
