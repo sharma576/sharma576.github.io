@@ -1,5 +1,6 @@
 const CACHE_NAME = "location-cache-v1";
-const FIREBASE_URL = "https://your-firestore-url.com"; // Replace with your Firestore endpoint
+const FIREBASE_URL = "https://firestore.googleapis.com/v1/projects/locationsaver-b9997/databases/(default)/documents/locations
+"; // Replace with your Firestore endpoint
 
 self.addEventListener("install", event => {
     self.skipWaiting();
