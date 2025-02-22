@@ -1,3 +1,21 @@
+importScripts("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js");
+importScripts("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+
+// Firebase Config
+const firebaseConfig = {
+    apiKey: "AIzaSyAB6STYBF-Fzg4U4QkET_bMej47ZUJDM4Y",
+    authDomain: "locationsaver-b9997.firebaseapp.com",
+    projectId: "locationsaver-b9997",
+    storageBucket: "locationsaver-b9997.firebaseapp.com",
+    messagingSenderId: "675975845355",
+    appId: "1:675975845355:web:95cf7d6a2c255a33be35ae",
+    measurementId: "G-WJJY3Q2M8E"
+};
+
+// Initialize Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
 self.addEventListener('install', (event) => {
     console.log("✅ Service Worker Installed!");
     self.skipWaiting();
@@ -16,35 +34,25 @@ self.addEventListener('sync', (event) => {
     }
 });
 
-// Open IndexedDB
-function openDB() {
-    return new Promise((resolve, reject) => {
-        let request = indexedDB.open("LocationDB", 1);
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject("❌ Failed to open IndexedDB");
-    });
-}
-
 // Send Cached Data
 async function sendCachedData() {
-    let db = await openDB();
-    let transaction = db.transaction("unsent_data", "readonly");
-    let store = transaction.objectStore("unsent_data");
-    let request = store.getAll();
+    let unsentData = await getCachedData();
+    for (const data of unsentData) {
+        await firebase.firestore().collection("user_data").add(data);
+    }
+}
 
-    request.onsuccess = async () => {
-        let unsentData = request.result;
-        if (unsentData.length > 0) {
-            for (const data of unsentData) {
-                await fetch('https://your-firebase-endpoint.com', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data),
-                });
-            }
-            let clearTransaction = db.transaction("unsent_data", "readwrite");
-            let clearStore = clearTransaction.objectStore("unsent_data");
-            clearStore.clear();
-        }
-    };
+// Get Cached Data from IndexedDB
+function getCachedData() {
+    return new Promise((resolve, reject) => {
+        let request = indexedDB.open("LocationDB", 1);
+        request.onsuccess = (event) => {
+            let db = event.target.result;
+            let transaction = db.transaction("unsent_data", "readonly");
+            let store = transaction.objectStore("unsent_data");
+            let getAllRequest = store.getAll();
+            getAllRequest.onsuccess = () => resolve(getAllRequest.result);
+        };
+        request.onerror = () => reject("❌ Failed to open IndexedDB");
+    });
 }
