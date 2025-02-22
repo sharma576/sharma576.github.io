@@ -1,62 +1,64 @@
-const CACHE_NAME = "location-cache-v1";
-const FIREBASE_URL = "https://firestore.googleapis.com/v1/projects/locationsaver-b9997/databases/(default)/documents/locations
-"; // Replace with your Firestore endpoint
+const CACHE_NAME = "location-tracker-cache";
+const FIREBASE_URL = "https://firestore.googleapis.com/v1/projects/locationsaver-b9997/databases/(default)/documents/locations";
 
 self.addEventListener("install", event => {
+    event.waitUntil(
+        caches.open(CACHE_NAME).then(cache => {
+            return cache.addAll(["/index.html"]);
+        })
+    );
+    console.log("✅ Service Worker Installed");
     self.skipWaiting();
 });
 
 self.addEventListener("activate", event => {
-    clients.claim();
+    console.log("✅ Service Worker Activated");
+    event.waitUntil(clients.claim());
 });
 
-self.addEventListener("message", async event => {
-    if (event.data.action === "SAVE_LOCATION") {
-        const locationData = event.data.data;
-        const cache = await caches.open(CACHE_NAME);
-        const storedLocations = await cache.match("locations");
-        let locations = storedLocations ? await storedLocations.json() : [];
-
-        locations.push(locationData);
-        await cache.put("locations", new Response(JSON.stringify(locations)));
-
-        if (navigator.onLine) {
-            sendCachedData();
-        }
-    }
-});
-
+// Send Cached Data when Online
 async function sendCachedData() {
     const cache = await caches.open(CACHE_NAME);
-    const storedLocations = await cache.match("locations");
-
-    if (storedLocations) {
-        const locations = await storedLocations.json();
-        if (locations.length > 0) {
+    let savedData = await cache.match("location-data");
+    if (savedData) {
+        let cachedData = await savedData.json();
+        for (let data of cachedData) {
             try {
                 await fetch(FIREBASE_URL, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ locations })
+                    body: JSON.stringify({
+                        fields: {
+                            latitude: { doubleValue: data.latitude },
+                            longitude: { doubleValue: data.longitude },
+                            type: { stringValue: data.type },
+                            timestamp: { timestampValue: new Date().toISOString() },
+                            device: { stringValue: data.device },
+                            ip: { stringValue: data.ip || "Unknown" }
+                        }
+                    })
                 });
-
-                await cache.delete("locations");
-                console.log("✅ Sent Cached Data");
+                console.log("✅ Cached location sent:", data);
             } catch (error) {
-                console.error("❌ Failed to Send Data:", error);
+                console.error("❌ Error sending cached data:", error);
             }
         }
+        await cache.delete("location-data"); // Clear cache after sending
     }
 }
 
+// When Online, Send Cached Data
 self.addEventListener("sync", event => {
-    if (event.tag === "sync-locations") {
+    if (event.tag === "sendCachedData") {
         event.waitUntil(sendCachedData());
     }
 });
 
+// Listen for Network Connection
 self.addEventListener("fetch", event => {
-    if (event.request.url.includes("/send-location")) {
-        event.respondWith(new Response(null, { status: 204 }));
+    if (!navigator.onLine) {
+        event.respondWith(
+            caches.match(event.request).then(response => response || fetch(event.request))
+        );
     }
 });
