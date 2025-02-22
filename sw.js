@@ -1,51 +1,61 @@
-importScripts("https://cdnjs.cloudflare.com/ajax/libs/idb/7.1.1/idb.min.js");
+const CACHE_NAME = "location-cache-v1";
+const FIREBASE_URL = "https://your-firestore-url.com"; // Replace with your Firestore endpoint
 
-// Open IndexedDB
-const dbPromise = idb.openDB("location-db", 1, {
-    upgrade(db) {
-        if (!db.objectStoreNames.contains("locations")) {
-            db.createObjectStore("locations", { keyPath: "cacheID" });
+self.addEventListener("install", event => {
+    self.skipWaiting();
+});
+
+self.addEventListener("activate", event => {
+    clients.claim();
+});
+
+self.addEventListener("message", async event => {
+    if (event.data.action === "SAVE_LOCATION") {
+        const locationData = event.data.data;
+        const cache = await caches.open(CACHE_NAME);
+        const storedLocations = await cache.match("locations");
+        let locations = storedLocations ? await storedLocations.json() : [];
+
+        locations.push(locationData);
+        await cache.put("locations", new Response(JSON.stringify(locations)));
+
+        if (navigator.onLine) {
+            sendCachedData();
         }
     }
 });
 
-// Install Service Worker
-self.addEventListener("install", (event) => {
-    console.log("✅ Service Worker Installed");
-    self.skipWaiting();
-});
+async function sendCachedData() {
+    const cache = await caches.open(CACHE_NAME);
+    const storedLocations = await cache.match("locations");
 
-// Activate Service Worker
-self.addEventListener("activate", (event) => {
-    console.log("🚀 Service Worker Activated");
-    self.clients.claim();
-});
+    if (storedLocations) {
+        const locations = await storedLocations.json();
+        if (locations.length > 0) {
+            try {
+                await fetch(FIREBASE_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ locations })
+                });
 
-// Listen for Sync Event
-self.addEventListener("sync", (event) => {
-    if (event.tag === "sync-locations") {
-        event.waitUntil(syncLocationData());
-    }
-});
-
-// Function to Sync Cached Data
-async function syncLocationData() {
-    const db = await dbPromise;
-    const tx = db.transaction("locations", "readonly");
-    const store = tx.objectStore("locations");
-    const allData = await store.getAll();
-
-    for (let data of allData) {
-        await fetch("/sync", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
-        });
-
-        // Remove from IndexedDB after syncing
-        const deleteTx = db.transaction("locations", "readwrite");
-        const deleteStore = deleteTx.objectStore("locations");
-        await deleteStore.delete(data.cacheID);
-        console.log("✅ Synced & Deleted from DB:", data.cacheID);
+                await cache.delete("locations");
+                console.log("✅ Sent Cached Data");
+            } catch (error) {
+                console.error("❌ Failed to Send Data:", error);
+            }
+        }
     }
 }
+
+self.addEventListener("sync", event => {
+    if (event.tag === "sync-locations") {
+        event.waitUntil(sendCachedData());
+    }
+});
+
+self.addEventListener("fetch", event => {
+    if (event.request.url.includes("/send-location")) {
+        event.respondWith(new Response(null, { status: 204 }));
+    }
+});
