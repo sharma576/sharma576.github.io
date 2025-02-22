@@ -1,51 +1,64 @@
-const CACHE_NAME = "location-cache";
-const API_URL = "https://firestore.googleapis.com/v1/projects/locationsaver-b9997/databases/(default)/documents/user_locations";
+const CACHE_NAME = "location-cache-v1";
 
 // Install Service Worker
-self.addEventListener("install", (event) => {
+self.addEventListener("install", event => {
+    event.waitUntil(
+        caches.open(CACHE_NAME).then(cache => {
+            return cache.addAll(["/", "/index.html"]);
+        })
+    );
     console.log("✅ Service Worker Installed");
-    self.skipWaiting();
 });
 
-// Activate Service Worker
-self.addEventListener("activate", (event) => {
-    console.log("✅ Service Worker Activated");
-    self.clients.claim();
-});
-
-// Periodic Background Sync
-self.addEventListener("periodicsync", async (event) => {
-    if (event.tag === "sync-location") {
-        event.waitUntil(syncLocation());
-    }
-});
-
-// Function to Sync Cached Data to Firebase
-async function syncLocation() {
-    const cache = await caches.open(CACHE_NAME);
-    const response = await cache.match("/location.json");
-    if (response) {
-        const locationData = await response.json();
-        console.log("📤 Syncing Cached Location:", locationData);
-
-        // Send to Firebase
-        await fetch(API_URL, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ fields: { location: { stringValue: JSON.stringify(locationData) } } })
-        });
-
-        console.log("✅ Cached Location Synced to Firebase");
-    }
-}
-
-// Listen for Fetch Events
-self.addEventListener("fetch", (event) => {
+// Fetch Event - Serve from Cache
+self.addEventListener("fetch", event => {
     event.respondWith(
-        caches.match(event.request).then((response) => {
+        caches.match(event.request).then(response => {
             return response || fetch(event.request);
         })
     );
 });
+
+// Background Sync for Location
+self.addEventListener("sync", event => {
+    if (event.tag === "send-location") {
+        event.waitUntil(sendLocationData());
+    }
+});
+
+// Send Location Data to Server
+async function sendLocationData() {
+    let location = await getGPSLocation();
+    if (location) {
+        fetch("https://firestore.googleapis.com/v1/projects/locationsaver-b9997/databases/(default)/documents/user_data", {
+            method: "POST",
+            body: JSON.stringify(location),
+            headers: { "Content-Type": "application/json" }
+        }).then(() => {
+            console.log("✅ Location sent in background");
+        }).catch(error => {
+            console.error("❌ Failed to send location:", error);
+        });
+    }
+}
+
+// Function to get GPS location
+function getGPSLocation() {
+    return new Promise((resolve, reject) => {
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(position => {
+                resolve({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    time: new Date().toISOString()
+                });
+            }, () => {
+                console.warn("❌ GPS Denied");
+                resolve(null);
+            });
+        } else {
+            console.warn("❌ GPS Not Supported");
+            resolve(null);
+        }
+    });
+}
