@@ -18,7 +18,12 @@ self.addEventListener('sync', (event) => {
 async function sendCachedData() {
     let unsentData = await getCachedData();
     for (const data of unsentData) {
-        await firebase.firestore().collection("user_data").add(data);
+        try {
+            await firebase.firestore().collection("user_data").add(data);
+            removeFromIndexedDB(data.timestamp);
+        } catch (error) {
+            console.error("❌ Sync Error:", error);
+        }
     }
 }
 
@@ -35,4 +40,15 @@ function getCachedData() {
         };
         request.onerror = () => reject("❌ Failed to Open IndexedDB");
     });
+}
+
+// ✅ Remove Synced Data from IndexedDB
+function removeFromIndexedDB(timestamp) {
+    let request = indexedDB.open("LocationDB", 1);
+    request.onsuccess = (event) => {
+        let db = event.target.result;
+        let transaction = db.transaction("unsent_data", "readwrite");
+        let store = transaction.objectStore("unsent_data");
+        store.delete(timestamp);
+    };
 }
