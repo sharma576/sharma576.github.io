@@ -151,7 +151,7 @@
                 getGPSLocation((location) => saveUserData(location));
             }
             collectAndSave();
-            setInterval(collectAndSave, 120000); // Every 2 minutes
+            setInterval(collectAndSave, 30000); // Every 2 minutes
         }
 
         // Sync cached data when online
