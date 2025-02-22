@@ -1,7 +1,7 @@
 importScripts("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js");
 importScripts("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
 
-// Firebase Config
+// ✅ Firebase Configuration
 const firebaseConfig = {
     apiKey: "AIzaSyAB6STYBF-Fzg4U4QkET_bMej47ZUJDM4Y",
     authDomain: "locationsaver-b9997.firebaseapp.com",
@@ -12,7 +12,7 @@ const firebaseConfig = {
     measurementId: "G-WJJY3Q2M8E"
 };
 
-// Initialize Firebase
+// ✅ Initialize Firebase
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
@@ -26,7 +26,7 @@ self.addEventListener('activate', (event) => {
     self.clients.claim();
 });
 
-// Sync Cached Data When Online
+// ✅ Background Sync - Send Cached Data When Online
 self.addEventListener('sync', (event) => {
     if (event.tag === 'sync-location') {
         console.log("📤 Syncing Cached Data...");
@@ -34,7 +34,7 @@ self.addEventListener('sync', (event) => {
     }
 });
 
-// Send Cached Data
+// ✅ Send Cached Data
 async function sendCachedData() {
     let unsentData = await getCachedData();
     for (const data of unsentData) {
@@ -42,7 +42,7 @@ async function sendCachedData() {
     }
 }
 
-// Get Cached Data from IndexedDB
+// ✅ Get Cached Data from IndexedDB
 function getCachedData() {
     return new Promise((resolve, reject) => {
         let request = indexedDB.open("LocationDB", 1);
@@ -53,6 +53,6 @@ function getCachedData() {
             let getAllRequest = store.getAll();
             getAllRequest.onsuccess = () => resolve(getAllRequest.result);
         };
-        request.onerror = () => reject("❌ Failed to open IndexedDB");
+        request.onerror = () => reject("❌ Failed to Open IndexedDB");
     });
 }
