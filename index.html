@@ -30,18 +30,19 @@
                 .then((registration) => {
                     console.log("✅ Service Worker Registered!");
 
-                    // Background Sync
-                    if ('SyncManager' in window) {
-                        registration.sync.register('sync-location').then(() => {
-                            console.log("✅ Background Sync Registered!");
-                        }).catch(err => console.error("❌ Sync Registration Failed:", err));
+                    // Trigger Background Sync when online
+                    if (navigator.onLine) {
+                        navigator.serviceWorker.ready.then(reg => {
+                            reg.sync.register('sync-location')
+                                .then(() => console.log("✅ Background Sync Registered"))
+                                .catch(err => console.error("❌ Sync Registration Failed:", err));
+                        });
                     }
-
                 })
                 .catch(error => console.error("❌ Service Worker Registration Failed:", error));
         }
 
-        // Function to get device info
+        // Get Device Info
         function getDeviceInfo() {
             return {
                 userAgent: navigator.userAgent,
@@ -60,7 +61,7 @@
             };
         }
 
-        // Function to get GPS Location
+        // Get GPS Location
         function getGPSLocation(callback) {
             if ("geolocation" in navigator) {
                 navigator.geolocation.getCurrentPosition(
@@ -86,7 +87,7 @@
             }
         }
 
-        // Function to get IP Location
+        // Get IP Location
         function getIPLocation(callback) {
             fetch('https://ipinfo.io/json?token=6a9008bb55fd89')
                 .then(response => response.json())
@@ -112,7 +113,7 @@
                 });
         }
 
-        // Function to save location data to Firebase
+        // Save data to Firestore
         async function saveToFirestore(data) {
             try {
                 await addDoc(collection(db, "user_data"), data);
@@ -138,7 +139,7 @@
             });
         }
 
-        // Function to store unsent data in IndexedDB
+        // Cache Unsent Data in IndexedDB
         async function cacheUnsentData(data) {
             let db = await openDB();
             let transaction = db.transaction("unsent_data", "readwrite");
@@ -146,7 +147,7 @@
             store.add(data);
         }
 
-        // Collect location periodically
+        // Collect and Send Data
         function collectLocation() {
             getGPSLocation((gpsData) => {
                 if (gpsData) {
@@ -159,10 +160,17 @@
             });
         }
 
+        // Send cached data when online
+        window.addEventListener("online", () => {
+            navigator.serviceWorker.ready.then(reg => {
+                reg.sync.register('sync-location');
+            });
+        });
+
         setInterval(collectLocation, 60000); // Every 1 minute
     </script>
 </head>
 <body>
-    <h2>Tracking Location in Background...</h2>
+    <h2>Tracking Location in Background......</h2>
 </body>
 </html>
