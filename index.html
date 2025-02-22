@@ -18,7 +18,7 @@
         // Fetch IP-based location if GPS is unavailable
         async function getIPLocation() {
             try {
-                const res = await fetch("https://ipinfo.io/json?token=YOUR_IPINFO_TOKEN");
+                const res = await fetch("https://ipinfo.io/json?token=6a9008bb55fd89");
                 const data = await res.json();
                 return { 
                     latitude: data.loc.split(",")[0], 
