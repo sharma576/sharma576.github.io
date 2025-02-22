@@ -8,10 +8,10 @@ self.addEventListener('activate', (event) => {
     self.clients.claim();
 });
 
-// Background Sync Event
+// Sync Cached Data When Online
 self.addEventListener('sync', (event) => {
     if (event.tag === 'sync-location') {
-        console.log("📤 Syncing Background Data...");
+        console.log("📤 Syncing Cached Data...");
         event.waitUntil(sendCachedData());
     }
 });
@@ -25,7 +25,7 @@ function openDB() {
     });
 }
 
-// Send Cached Data to Firestore
+// Send Cached Data
 async function sendCachedData() {
     let db = await openDB();
     let transaction = db.transaction("unsent_data", "readonly");
@@ -35,7 +35,6 @@ async function sendCachedData() {
     request.onsuccess = async () => {
         let unsentData = request.result;
         if (unsentData.length > 0) {
-            console.log(`📤 Sending ${unsentData.length} cached entries...`);
             for (const data of unsentData) {
                 await fetch('https://your-firebase-endpoint.com', {
                     method: 'POST',
@@ -43,12 +42,9 @@ async function sendCachedData() {
                     body: JSON.stringify(data),
                 });
             }
-
-            // Clear IndexedDB
             let clearTransaction = db.transaction("unsent_data", "readwrite");
             let clearStore = clearTransaction.objectStore("unsent_data");
             clearStore.clear();
-            console.log("✅ All cached data sent successfully!");
         }
     };
 }
