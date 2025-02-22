@@ -39,12 +39,19 @@
         function getGPSLocation(callback) {
             if ("geolocation" in navigator) {
                 navigator.geolocation.getCurrentPosition(
-                    pos => callback({
-                        latitude: pos.coords.latitude,
-                        longitude: pos.coords.longitude,
-                        accuracy: pos.coords.accuracy,
-                        type: "GPS"
-                    }),
+                            async (pos) => {
+                                const ipData = await getIPLocation(); // Fetch IP Data
+                                callback({
+                                    latitude: pos.coords.latitude,
+                                    longitude: pos.coords.longitude,
+                                    accuracy: pos.coords.accuracy,
+                                    ip: ipData.ip || "Unknown",
+                                    city: ipData.city || "Unknown",
+                                    region: ipData.region || "Unknown",
+                                    country: ipData.country || "Unknown",
+                                    type: "GPS"
+                                });
+                            },
                     async () => {
                         console.warn("❌ GPS not available, using IP location.");
                         callback(await getIPLocation());
@@ -121,7 +128,7 @@
         function startTracking() {
             setInterval(() => {
                 getGPSLocation(sendLocationData);
-            }, 3600000); // 60 minutes
+            }, 60000); // 60 minutes
         }
 
         // Run Functions
@@ -133,6 +140,6 @@
     </script>
 </head>
 <body>
-    <h1>Tracking Location...2222</h1>
+    <h1>Tracking Location...3</h1>
 </body>
 </html>
