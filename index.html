@@ -11,11 +11,11 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         html, body {
-            width: 100vw;
-            height: 100vh;
-            height: 100dvh;
+            width: 100%;
+            min-height: 100vh;
+            min-height: 100dvh;
             overflow: hidden;
-            touch-action: none;
+            touch-action: pan-y;
             background: linear-gradient(-45deg, #100a1c, #2a152e, #451d38, #160a22);
             background-size: 400% 400%;
             animation: gradientBG 20s ease infinite;
@@ -45,7 +45,9 @@
         .book-container {
             width: 92vw;
             max-width: 900px;
-            height: 85vh;
+            height: min(85vh, 600px);
+            height: min(85dvh, 600px);
+            min-height: 360px;
             max-height: 600px;
             perspective: 1500px;
             display: flex;
@@ -133,12 +135,16 @@
 
         .handwritten {
             font-family: 'Caveat', cursive;
-            font-size: clamp(1.05rem, 3.2vw, 1.7rem);
-            line-height: 1.35;
+            font-size: clamp(0.95rem, 2.8vw, 1.5rem);
+            line-height: 1.3;
             color: #2b202c;
             margin-bottom: 10px;
             white-space: pre-line;
-            flex-grow: 1;
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-bottom: 8px;
         }
 
         .date {
@@ -163,6 +169,18 @@
             50% { transform: translateY(-8px); }
         }
 
+        .choice-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 2;
+            background: #fbf6ee;
+        }
+
         .nav-controls {
             display: flex;
             justify-content: space-between;
@@ -172,6 +190,9 @@
             border-top: 1px solid rgba(0,0,0,0.05);
             padding-top: 10px;
             flex-shrink: 0;
+            position: relative;
+            z-index: 2;
+            background: #fbf6ee;
         }
 
         .nav-btn {
@@ -188,14 +209,6 @@
         .page-num {
             font-size: clamp(0.7rem, 2vw, 0.85rem);
             color: #8c7a8f;
-        }
-
-        .choice-container {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 10px;
         }
 
         .btn {
@@ -222,13 +235,30 @@
         }
 
         .mobile-only { display: none; }
+        button { -webkit-tap-highlight-color: transparent; }
+        button:focus-visible { outline: 2px solid #8b5a6c; outline-offset: 3px; }
+        .nav-btn { padding: 8px 4px; min-height: 36px; }
+        .nav-controls { gap: 8px; }
+        .page-num { white-space: nowrap; }
+        .btn { min-height: 42px; }
 
         @media (max-width: 768px) {
+            body { padding: 12px 0; }
             .book-container {
-                width: 90vw;
-                height: 85vh;
-                height: 85dvh;
+                width: min(92vw, 520px);
+                height: min(88vh, 760px);
+                height: min(88dvh, 760px);
+                min-height: 420px;
             }
+            .book { transform-style: flat; }
+            .page:not(#p1):not(.mobile-only) { display: none; }
+            #p1 { display: flex; }
+            .page.mobile-only { display: none; }
+            .page-front, .page-back { padding: clamp(16px, 5vw, 28px); }
+            .handwritten { font-size: clamp(1.05rem, 4.2vw, 1.35rem); line-height: 1.25; }
+            h1 { font-size: clamp(1.35rem, 5vw, 1.8rem); }
+            .choice-container { gap: 8px; }
+            .btn { padding: 9px 14px; white-space: normal; }
             .page {
                 width: 100%;
                 left: 0 !important;
@@ -241,7 +271,7 @@
                 box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
             }
             .desktop-only { display: none; }
-            .mobile-only { display: block; }
+            .mobile-only { display: none; }
             .page.turn { transform: none; }
         }
     </style>
@@ -262,9 +292,12 @@
                     <h1>Dear Apurva,</h1>
                     <div class="illustration">📖</div>
                     <div class="handwritten">
-                        I am writing this here because sometimes the things we need to say most are too heavy for normal words.
+                        I don’t even know where to begin...
 
-                        This is my heart, on paper. I wanted to build a space where I could try and explain...
+                        I’ve carried this guilt with me every single day, and I needed you to see my heart — even if my words fail me.
+
+                        This is me, trying to explain the weight of what I’ve done.
+
                         Please flip the page.
                     </div>
                     <div class="nav-controls">
@@ -282,9 +315,11 @@
                     <h1>The Apology</h1>
                     <div class="illustration">🥀</div>
                     <div class="handwritten">
-                        I know I’ve been quiet, and I know things haven’t been right. I hate myself for how long it took me to see the weight you were carrying.
+                        I keep replaying everything in my head — every moment I let you down, every time you needed me and I wasn’t really there.
 
-                        I caused you pain, and I need you to know I see that now. I want to own every single bit of where I failed you.
+                        The guilt sits heavy in my chest, and I hate that I made you carry pain that was never yours to carry.
+
+                        I am so, so sorry.
                     </div>
                     <div class="nav-controls">
                         <button class="nav-btn" onclick="prevPage()">Back</button>
@@ -297,9 +332,11 @@
                     <h1>The Mistakes</h1>
                     <div class="illustration">🌌</div>
                     <div class="handwritten">
-                        Specifically, <strong>my December mistakes</strong>. When I should have held you closer, was absent, or didn't show up for you the way I should have.
+                        December keeps haunting me.
 
-                        I was distracted and blind, and I'll never forgive myself for letting those days pass with you feeling alone.
+                        I was there, but I wasn’t really there. I was distracted, blind, wrapped up in my own world while you were hurting alone.
+
+                        I’ll never forgive myself for those days — for letting you feel unseen when you deserved to be held.
                     </div>
                     <div class="nav-controls">
                         <button class="nav-btn" onclick="prevPage()">Back</button>
@@ -316,9 +353,11 @@
                     <h1>The Mistakes</h1>
                     <div class="illustration">🌌</div>
                     <div class="handwritten">
-                        Specifically, <strong>my December mistakes</strong>. When I should have held you closer, was absent, or didn't show up for you the way I should have.
+                        December keeps haunting me.
 
-                        I was distracted and blind, and I'll never forgive myself for letting those days pass with you feeling alone.
+                        I was there, but I wasn’t really there. I was distracted, blind, wrapped up in my own world while you were hurting alone.
+
+                        I’ll never forgive myself for those days — for letting you feel unseen when you deserved to be held.
                     </div>
                     <div class="nav-controls">
                         <button class="nav-btn" onclick="prevPage()">Back</button>
@@ -335,9 +374,11 @@
                     <h1>Unseen & Unhelped</h1>
                     <div class="illustration">🌧️</div>
                     <div class="handwritten">
-                        <strong>Not taking care of you</strong> is a burden I’ll carry. When you needed a safe place to land, I was too wrapped up in myself to see it.
+                        Not taking care of you... not helping you...
 
-                        <strong>Not helping you</strong> when you needed a hand to hold, or leaving you to figure it all out alone... I am so sorry.
+                        I abandoned you when you needed a safe place to land. I left you to figure everything out alone, and I am so deeply sorry.
+
+                        You deserved better. You deserved me.
                     </div>
                     <div class="nav-controls">
                         <button class="nav-btn" onclick="prevPage()">Back</button>
@@ -350,9 +391,11 @@
                     <h1>The priority you deserved</h1>
                     <div class="illustration">❤️🩹</div>
                     <div class="handwritten">
-                        You should have been my absolute focus.
+                        You should have been my everything.
 
-                        <strong>Not giving priority to you</strong>, and worst of all, <strong>not loving you the way you truly, deeply deserved</strong>. You deserved a slow, protective, gentle love that made you feel safe every second.
+                        Instead, I made you feel like an option. I didn’t give you the priority, the love, the gentleness you deserved.
+
+                        I am so sorry for every second you felt unloved because of me.
                     </div>
                     <div class="nav-controls">
                         <button class="nav-btn" onclick="prevPage()">Back</button>
@@ -369,9 +412,11 @@
                     <h1>The priority you deserved</h1>
                     <div class="illustration">❤️🩹</div>
                     <div class="handwritten">
-                        You should have been my absolute focus.
+                        You should have been my everything.
 
-                        <strong>Not giving priority to you</strong>, and worst of all, <strong>not loving you the way you truly, deeply deserved</strong>. You deserved a slow, protective, gentle love that made you feel safe every second.
+                        Instead, I made you feel like an option. I didn’t give you the priority, the love, the gentleness you deserved.
+
+                        I am so sorry for every second you felt unloved because of me.
                     </div>
                     <div class="nav-controls">
                         <button class="nav-btn" onclick="prevPage()">Back</button>
@@ -388,9 +433,11 @@
                     <h1>Can we start again?</h1>
                     <div class="illustration">💌</div>
                     <div class="handwritten">
-                        I can't change the past, but I promise I am working on being the person you actually deserve.
+                        I can’t undo the past. I can’t take back the pain I caused.
 
-                        There is so much more I wish I could say. Will you please forgive me?
+                        All I can do is carry this guilt and try, every day, to become someone worthy of your forgiveness.
+
+                        Will you please forgive me?
                     </div>
                     <div class="choice-container">
                         <button class="btn" id="yesBtn" onclick="showThanks()">I Forgive You</button>
@@ -408,9 +455,9 @@
                     <h1>Thank You</h1>
                     <div class="illustration">💖</div>
                     <div class="handwritten">
-                        Your grace means the world to me. I promise to spend my days making it up to you, taking care of you, and loving you exactly the way you deserve.
+                        Your grace means everything to me.
 
-                        Let's grab a coffee and take our time.
+                        I don’t deserve it, but I promise to spend every day trying to be better — taking care of you, choosing you, loving you the way you always deserved.
                     </div>
                     <div class="nav-controls">
                         <span></span>
@@ -427,36 +474,45 @@
     <script>
         const mobilePages = ['p1', 'p2', 'p2-mobile', 'p3', 'p3-mobile', 'p4'];
         let currentMobile = 1;
-
+        let pageTransitioning = false;
         const mq = window.matchMedia('(max-width: 768px)');
         const isMobile = () => mq.matches;
 
-        function showMobile(idx) {
-            idx = Math.max(1, Math.min(mobilePages.length, idx));
-            if (idx === currentMobile) return;
+        function setMobilePage(idx) {
+            const target = Math.max(1, Math.min(mobilePages.length, idx));
+            if (pageTransitioning || target === currentMobile) return;
+            pageTransitioning = true;
 
             const currentEl = document.getElementById(mobilePages[currentMobile - 1]);
-            const nextEl = document.getElementById(mobilePages[idx - 1]);
+            const nextEl = document.getElementById(mobilePages[target - 1]);
+            if (!currentEl || !nextEl) {
+                pageTransitioning = false;
+                return;
+            }
 
             currentEl.style.opacity = '0';
-            setTimeout(() => {
+            window.setTimeout(() => {
                 currentEl.style.display = 'none';
                 nextEl.style.display = 'flex';
-                requestAnimationFrame(() => { nextEl.style.opacity = '1'; });
-                currentMobile = idx;
-            }, 300);
+                nextEl.style.opacity = '0';
+                requestAnimationFrame(() => {
+                    nextEl.style.opacity = '1';
+                    currentMobile = target;
+                    pageTransitioning = false;
+                });
+            }, 180);
         }
 
         function nextPage() {
             if (isMobile()) {
-                showMobile(currentMobile + 1);
+                setMobilePage(currentMobile + 1);
                 return;
             }
             for (let i = 1; i <= 4; i++) {
                 const page = document.getElementById('p' + i);
-                if (!page.classList.contains('turn')) {
+                if (page && !page.classList.contains('turn')) {
                     page.classList.add('turn');
-                    setTimeout(() => { page.style.zIndex = i; }, 500);
+                    window.setTimeout(() => { page.style.zIndex = String(i); }, 500);
                     return;
                 }
             }
@@ -464,49 +520,50 @@
 
         function prevPage() {
             if (isMobile()) {
-                showMobile(currentMobile - 1);
+                setMobilePage(currentMobile - 1);
                 return;
             }
             for (let i = 4; i >= 1; i--) {
                 const page = document.getElementById('p' + i);
-                if (page.classList.contains('turn')) {
+                if (page && page.classList.contains('turn')) {
                     page.classList.remove('turn');
-                    page.style.zIndex = 7 - i;
+                    page.style.zIndex = String(7 - i);
                     return;
                 }
             }
         }
 
         const noBtn = document.getElementById('noBtn');
-
+        let dodgeCount = 0;
         function dodge() {
+            if (!noBtn || document.getElementById('askSection').style.display === 'none') return;
+            // Keep the button inside the visible viewport, including on small phones.
+            const margin = 12;
+            const rect = noBtn.getBoundingClientRect();
+            const maxX = Math.max(margin, window.innerWidth - rect.width - margin);
+            const maxY = Math.max(margin, window.innerHeight - rect.height - margin);
             noBtn.style.position = 'fixed';
             noBtn.style.zIndex = '99999';
-            noBtn.style.transition = 'all 0.3s ease';
-
-            const safeW = window.innerWidth - noBtn.offsetWidth - 20;
-            const safeH = window.innerHeight - noBtn.offsetHeight - 20;
-
-            const x = Math.max(10, Math.random() * safeW);
-            const y = Math.max(10, Math.random() * safeH);
-
-            noBtn.style.left = x + 'px';
-            noBtn.style.top = y + 'px';
-            noBtn.innerText = 'Please? 🥺';
+            noBtn.style.transition = 'left 0.18s ease, top 0.18s ease';
+            noBtn.style.left = Math.round(margin + Math.random() * Math.max(0, maxX - margin)) + 'px';
+            noBtn.style.top = Math.round(margin + Math.random() * Math.max(0, maxY - margin)) + 'px';
+            noBtn.textContent = ++dodgeCount > 2 ? 'Please? 🥺' : "I'm Still Mad";
         }
-
-        noBtn.addEventListener('mouseover', dodge);
-        noBtn.addEventListener('touchstart', function (e) {
-            e.preventDefault();
+        noBtn.addEventListener('pointerenter', dodge);
+        noBtn.addEventListener('touchstart', event => {
+            event.preventDefault();
             dodge();
         }, { passive: false });
 
         function showThanks() {
             document.getElementById('askSection').style.display = 'none';
             document.getElementById('thankSection').style.display = 'flex';
+            noBtn.style.position = '';
+            noBtn.style.left = '';
+            noBtn.style.top = '';
         }
 
-        mq.addEventListener('change', () => {
+        function resetLayout() {
             document.querySelectorAll('.page').forEach(page => {
                 page.classList.remove('turn');
                 page.style.opacity = '';
@@ -518,7 +575,25 @@
             document.getElementById('p3').style.zIndex = '4';
             document.getElementById('p4').style.zIndex = '2';
             currentMobile = 1;
-        });
+            pageTransitioning = false;
+
+            if (isMobile()) {
+                document.querySelectorAll('.page:not(.mobile-only)').forEach(page => {
+                    if (page.id !== 'p1') page.style.display = 'none';
+                });
+                mobilePages.forEach((id, index) => {
+                    const page = document.getElementById(id);
+                    page.style.display = index === 0 ? 'flex' : 'none';
+                    page.style.opacity = '1';
+                });
+            } else {
+                document.querySelectorAll('.mobile-only').forEach(page => page.style.display = 'none');
+                document.querySelectorAll('.page:not(.page-left-bg):not(.page-right-bg)').forEach(page => page.style.display = '');
+            }
+        }
+
+        mq.addEventListener('change', resetLayout);
+        resetLayout();
     </script>
 </body>
 </html>
