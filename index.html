@@ -4,183 +4,521 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>For You...</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Quicksand:wght@400;600&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Quicksand', sans-serif;
-            background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
+        html, body {
+            width: 100vw;
             height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            touch-action: none;
+            background: linear-gradient(-45deg, #100a1c, #2a152e, #451d38, #160a22);
+            background-size: 400% 400%;
+            animation: gradientBG 20s ease infinite;
+            font-family: 'Quicksand', sans-serif;
+            color: #2c2c2c;
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: hidden; /* Prevents scrollbars when button runs away */
-            text-align: center;
         }
 
-        /* Floating Hearts Background */
-        .heart-bg {
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .sparkle-bg {
             position: absolute;
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 20px;
-            animation: floatUp 10s linear infinite;
-            z-index: 0;
-        }
-        @keyframes floatUp {
-            0% { transform: translateY(100vh) scale(0.5); opacity: 1; }
-            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
         }
 
-        /* Main Card */
-        .card {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-            max-width: 450px;
-            width: 90%;
+        .book-container {
+            width: 92vw;
+            max-width: 900px;
+            height: 85vh;
+            max-height: 600px;
+            perspective: 1500px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             z-index: 10;
-            backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .book {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .page {
+            position: absolute;
+            width: 50%;
+            height: 100%;
+            top: 0;
+            transform-style: preserve-3d;
+            transform-origin: left center;
+            transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1), opacity 0.3s ease;
+            background: #faf4eb;
+            box-shadow: inset 3px 0px 20px rgba(0,0,0,0.08);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .page-left-bg {
+            left: 0;
+            z-index: 2;
+            border-radius: 12px 0 0 12px;
+            box-shadow: inset -5px 0px 15px rgba(0,0,0,0.1);
+            background: linear-gradient(to right, #ece1d1 0%, #faf4eb 10%);
+        }
+
+        .page-right-bg {
+            right: 0;
+            z-index: 1;
+            border-radius: 0 12px 12px 0;
+            box-shadow: inset 5px 0px 15px rgba(0,0,0,0.1);
+            background: linear-gradient(to left, #ece1d1 0%, #faf4eb 10%);
+        }
+
+        .page.turn { transform: rotateY(-180deg); }
+
+        .page-front, .page-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: clamp(15px, 4vw, 40px);
+            background: #fbf6ee;
+            overflow: hidden;
+        }
+
+        .page-front {
+            border-radius: 0 12px 12px 0;
+            box-shadow: inset -10px 0 20px rgba(0,0,0,0.05);
+        }
+
+        .page-back {
+            transform: rotateY(180deg);
+            border-radius: 12px 0 0 12px;
+            box-shadow: inset 10px 0 20px rgba(0,0,0,0.05);
+            background: #faf3e8;
         }
 
         h1 {
-            font-family: 'Dancing Script', cursive;
-            color: #ff6b81;
-            font-size: 3rem;
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.3rem, 3.5vw, 2.2rem);
+            color: #4a2f4c;
+            margin-bottom: 5px;
+            border-bottom: 1px solid rgba(74, 47, 76, 0.15);
+            padding-bottom: 5px;
+            flex-shrink: 0;
+        }
+
+        .handwritten {
+            font-family: 'Caveat', cursive;
+            font-size: clamp(1.05rem, 3.2vw, 1.7rem);
+            line-height: 1.35;
+            color: #2b202c;
             margin-bottom: 10px;
-            margin-top: 0;
+            white-space: pre-line;
+            flex-grow: 1;
         }
 
-        p {
-            color: #4a4a4a;
-            line-height: 1.8;
-            font-size: 1.1rem;
-            margin-bottom: 30px;
+        .date {
+            font-size: clamp(0.65rem, 2vw, 0.9rem);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #8c7b8e;
+            margin-bottom: 5px;
+            flex-shrink: 0;
         }
 
-        .buttons {
+        .illustration {
+            text-align: center;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            margin: 5px 0;
+            animation: float 4s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .nav-controls {
             display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-top: 10px;
+            border-top: 1px solid rgba(0,0,0,0.05);
+            padding-top: 10px;
+            flex-shrink: 0;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 600;
+            font-size: clamp(0.8rem, 2.5vw, 0.95rem);
+            cursor: pointer;
+            color: #8b5a6c;
+            transition: all 0.2s ease;
+        }
+
+        .page-num {
+            font-size: clamp(0.7rem, 2vw, 0.85rem);
+            color: #8c7a8f;
+        }
+
+        .choice-container {
+            display: flex;
+            gap: 10px;
             justify-content: center;
-            gap: 15px;
-            position: relative;
-            height: 50px;
+            flex-wrap: wrap;
+            margin-top: 10px;
         }
 
         .btn {
             border: none;
-            padding: 12px 30px;
-            font-size: 16px;
+            padding: 8px 18px;
+            font-size: clamp(0.8rem, 2.5vw, 0.95rem);
             font-family: 'Quicksand', sans-serif;
             font-weight: 600;
-            border-radius: 30px;
+            border-radius: 20px;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            white-space: nowrap;
         }
 
-        /* The Forgive Button */
         #yesBtn {
-            background-color: #ff6b81;
+            background-color: #8b5a6c;
             color: white;
-            box-shadow: 0 5px 15px rgba(255, 107, 129, 0.4);
-            animation: pulse 2s infinite;
-        }
-        #yesBtn:hover {
-            transform: scale(1.05);
-        }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(255, 107, 129, 0.7); }
-            70% { box-shadow: 0 0 0 15px rgba(255, 107, 129, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 107, 129, 0); }
+            box-shadow: 0 4px 10px rgba(139, 90, 108, 0.3);
         }
 
-        /* The Runaway Button */
         #noBtn {
-            background-color: #f1f2f6;
-            color: #747d8c;
-            position: relative; /* Will change to absolute via JS */
+            background-color: transparent;
+            color: #8a7a8d;
+            border: 1px solid rgba(0,0,0,0.15);
         }
 
-        /* Success Message */
-        #successMessage {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-        }
-        .big-heart {
-            font-size: 80px;
-            color: #ff6b81;
-            animation: beat 1s infinite alternate;
-        }
-        @keyframes beat {
-            to { transform: scale(1.2); }
+        .mobile-only { display: none; }
+
+        @media (max-width: 768px) {
+            .book-container {
+                width: 90vw;
+                height: 85vh;
+                height: 85dvh;
+            }
+            .page {
+                width: 100%;
+                left: 0 !important;
+                right: 0 !important;
+                border-radius: 12px;
+            }
+            .page-left-bg, .page-right-bg { display: none; }
+            .page-front {
+                border-radius: 12px;
+                box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
+            }
+            .desktop-only { display: none; }
+            .mobile-only { display: block; }
+            .page.turn { transform: none; }
         }
     </style>
 </head>
 <body>
 
-    <div class="card" id="mainCard">
-        <h1>I am so sorry.</h1>
-        <p>
-            Dear <strong>Apurva</strong>,<br><br>
-            I know I messed up, and I can't stop thinking about how much I regret it. Your friendship is a rare kind of magic, and my life is simply better with you in it. I hate knowing I hurt you. <br><br>
-            Please let me make it right?
-        </p>
-        
-        <div class="buttons">
-            <button class="btn" id="yesBtn" onclick="forgiveMe()">I Forgive You</button>
-            <button class="btn" id="noBtn">I'm Still Mad</button>
+    <div class="sparkle-bg"></div>
+
+    <div class="book-container">
+        <div class="book">
+
+            <div class="page page-left-bg"></div>
+
+            <!-- PAGE 1 -->
+            <div class="page" id="p1" style="z-index: 6; right: 0;">
+                <div class="page-front">
+                    <span class="date">A letter for you</span>
+                    <h1>Dear Apurva,</h1>
+                    <div class="illustration">📖</div>
+                    <div class="handwritten">
+                        I am writing this here because sometimes the things we need to say most are too heavy for normal words.
+
+                        This is my heart, on paper. I wanted to build a space where I could try and explain...
+                        Please flip the page.
+                    </div>
+                    <div class="nav-controls">
+                        <span></span>
+                        <span class="page-num">1 / 6</span>
+                        <button class="nav-btn" onclick="nextPage()">Open Book ➜</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE 2 -->
+            <div class="page" id="p2" style="z-index: 5; right: 0;">
+                <div class="page-front">
+                    <span class="date">The truth</span>
+                    <h1>The Apology</h1>
+                    <div class="illustration">🥀</div>
+                    <div class="handwritten">
+                        I know I’ve been quiet, and I know things haven’t been right. I hate myself for how long it took me to see the weight you were carrying.
+
+                        I caused you pain, and I need you to know I see that now. I want to own every single bit of where I failed you.
+                    </div>
+                    <div class="nav-controls">
+                        <button class="nav-btn" onclick="prevPage()">Back</button>
+                        <span class="page-num">2 / 6</span>
+                        <button class="nav-btn" onclick="nextPage()">Next ➜</button>
+                    </div>
+                </div>
+                <div class="page-back desktop-only">
+                    <span class="date">Where I failed</span>
+                    <h1>The Mistakes</h1>
+                    <div class="illustration">🌌</div>
+                    <div class="handwritten">
+                        Specifically, <strong>my December mistakes</strong>. When I should have held you closer, was absent, or didn't show up for you the way I should have.
+
+                        I was distracted and blind, and I'll never forgive myself for letting those days pass with you feeling alone.
+                    </div>
+                    <div class="nav-controls">
+                        <button class="nav-btn" onclick="prevPage()">Back</button>
+                        <span class="page-num">3 / 6</span>
+                        <button class="nav-btn" onclick="nextPage()">Next ➜</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MOBILE PAGE 3 -->
+            <div class="page mobile-only" id="p2-mobile" style="z-index: 4; right: 0;">
+                <div class="page-front">
+                    <span class="date">Where I failed</span>
+                    <h1>The Mistakes</h1>
+                    <div class="illustration">🌌</div>
+                    <div class="handwritten">
+                        Specifically, <strong>my December mistakes</strong>. When I should have held you closer, was absent, or didn't show up for you the way I should have.
+
+                        I was distracted and blind, and I'll never forgive myself for letting those days pass with you feeling alone.
+                    </div>
+                    <div class="nav-controls">
+                        <button class="nav-btn" onclick="prevPage()">Back</button>
+                        <span class="page-num">3 / 6</span>
+                        <button class="nav-btn" onclick="nextPage()">Next ➜</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE 3 -->
+            <div class="page" id="p3" style="z-index: 4; right: 0;">
+                <div class="page-front">
+                    <span class="date">Not taking care</span>
+                    <h1>Unseen & Unhelped</h1>
+                    <div class="illustration">🌧️</div>
+                    <div class="handwritten">
+                        <strong>Not taking care of you</strong> is a burden I’ll carry. When you needed a safe place to land, I was too wrapped up in myself to see it.
+
+                        <strong>Not helping you</strong> when you needed a hand to hold, or leaving you to figure it all out alone... I am so sorry.
+                    </div>
+                    <div class="nav-controls">
+                        <button class="nav-btn" onclick="prevPage()">Back</button>
+                        <span class="page-num">4 / 6</span>
+                        <button class="nav-btn" onclick="nextPage()">Next ➜</button>
+                    </div>
+                </div>
+                <div class="page-back desktop-only">
+                    <span class="date">The Priority</span>
+                    <h1>The priority you deserved</h1>
+                    <div class="illustration">❤️🩹</div>
+                    <div class="handwritten">
+                        You should have been my absolute focus.
+
+                        <strong>Not giving priority to you</strong>, and worst of all, <strong>not loving you the way you truly, deeply deserved</strong>. You deserved a slow, protective, gentle love that made you feel safe every second.
+                    </div>
+                    <div class="nav-controls">
+                        <button class="nav-btn" onclick="prevPage()">Back</button>
+                        <span class="page-num">5 / 6</span>
+                        <button class="nav-btn" onclick="nextPage()">Next ➜</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MOBILE PAGE 5 -->
+            <div class="page mobile-only" id="p3-mobile" style="z-index: 3; right: 0;">
+                <div class="page-front">
+                    <span class="date">The Priority</span>
+                    <h1>The priority you deserved</h1>
+                    <div class="illustration">❤️🩹</div>
+                    <div class="handwritten">
+                        You should have been my absolute focus.
+
+                        <strong>Not giving priority to you</strong>, and worst of all, <strong>not loving you the way you truly, deeply deserved</strong>. You deserved a slow, protective, gentle love that made you feel safe every second.
+                    </div>
+                    <div class="nav-controls">
+                        <button class="nav-btn" onclick="prevPage()">Back</button>
+                        <span class="page-num">5 / 6</span>
+                        <button class="nav-btn" onclick="nextPage()">Next ➜</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE 4 -->
+            <div class="page" id="p4" style="z-index: 2; right: 0;">
+                <div class="page-front" id="askSection">
+                    <span class="date">Looking forward</span>
+                    <h1>Can we start again?</h1>
+                    <div class="illustration">💌</div>
+                    <div class="handwritten">
+                        I can't change the past, but I promise I am working on being the person you actually deserve.
+
+                        There is so much more I wish I could say. Will you please forgive me?
+                    </div>
+                    <div class="choice-container">
+                        <button class="btn" id="yesBtn" onclick="showThanks()">I Forgive You</button>
+                        <button class="btn" id="noBtn">I'm Still Mad</button>
+                    </div>
+                    <div class="nav-controls">
+                        <button class="nav-btn" id="finalBack" onclick="prevPage()">Back</button>
+                        <span class="page-num">6 / 6</span>
+                        <span></span>
+                    </div>
+                </div>
+
+                <div class="page-front" id="thankSection" style="display: none;">
+                    <span class="date">A new beginning</span>
+                    <h1>Thank You</h1>
+                    <div class="illustration">💖</div>
+                    <div class="handwritten">
+                        Your grace means the world to me. I promise to spend my days making it up to you, taking care of you, and loving you exactly the way you deserve.
+
+                        Let's grab a coffee and take our time.
+                    </div>
+                    <div class="nav-controls">
+                        <span></span>
+                        <span class="page-num">6 / 6</span>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page page-right-bg"></div>
         </div>
     </div>
 
-    <!-- Hidden success screen -->
-    <div class="card" id="successMessage">
-        <div class="big-heart">💖</div>
-        <h1>Thank You!</h1>
-        <p>You have no idea how much this means to me. I promise to be better. Let me treat you to your favorite food soon!</p>
-    </div>
-
     <script>
-        // 1. Generate Floating Background Hearts
-        function createHearts() {
-            for (let i = 0; i < 20; i++) {
-                let heart = document.createElement("div");
-                heart.innerHTML = "❤";
-                heart.className = "heart-bg";
-                heart.style.left = Math.random() * 100 + "vw";
-                heart.style.animationDuration = (Math.random() * 5 + 5) + "s";
-                heart.style.fontSize = (Math.random() * 20 + 10) + "px";
-                document.body.appendChild(heart);
+        const mobilePages = ['p1', 'p2', 'p2-mobile', 'p3', 'p3-mobile', 'p4'];
+        let currentMobile = 1;
+
+        const mq = window.matchMedia('(max-width: 768px)');
+        const isMobile = () => mq.matches;
+
+        function showMobile(idx) {
+            idx = Math.max(1, Math.min(mobilePages.length, idx));
+            if (idx === currentMobile) return;
+
+            const currentEl = document.getElementById(mobilePages[currentMobile - 1]);
+            const nextEl = document.getElementById(mobilePages[idx - 1]);
+
+            currentEl.style.opacity = '0';
+            setTimeout(() => {
+                currentEl.style.display = 'none';
+                nextEl.style.display = 'flex';
+                requestAnimationFrame(() => { nextEl.style.opacity = '1'; });
+                currentMobile = idx;
+            }, 300);
+        }
+
+        function nextPage() {
+            if (isMobile()) {
+                showMobile(currentMobile + 1);
+                return;
+            }
+            for (let i = 1; i <= 4; i++) {
+                const page = document.getElementById('p' + i);
+                if (!page.classList.contains('turn')) {
+                    page.classList.add('turn');
+                    setTimeout(() => { page.style.zIndex = i; }, 500);
+                    return;
+                }
             }
         }
-        createHearts();
 
-        // 2. Make the "No" Button Run Away
-        const noBtn = document.getElementById('noBtn');
-        
-        // Use both touch and mouseover so it works on phones and computers
-        ['mouseover', 'touchstart'].forEach(eventType => {
-            noBtn.addEventListener(eventType, function(e) {
-                e.preventDefault();
-                
-                // Switch to absolute positioning to move freely around the screen
-                noBtn.style.position = 'fixed';
-                
-                // Calculate random positions within the window bounds
-                const x = Math.random() * (window.innerWidth - noBtn.offsetWidth - 20);
-                const y = Math.random() * (window.innerHeight - noBtn.offsetHeight - 20);
-                
-                noBtn.style.left = `${Math.max(10, x)}px`;
-                noBtn.style.top = `${Math.max(10, y)}px`;
-            });
-        });
-
-        // 3. Handle the "Yes" Button
-        function forgiveMe() {
-            document.getElementById('mainCard').style.display = 'none';
-            document.getElementById('successMessage').style.display = 'flex';
+        function prevPage() {
+            if (isMobile()) {
+                showMobile(currentMobile - 1);
+                return;
+            }
+            for (let i = 4; i >= 1; i--) {
+                const page = document.getElementById('p' + i);
+                if (page.classList.contains('turn')) {
+                    page.classList.remove('turn');
+                    page.style.zIndex = 7 - i;
+                    return;
+                }
+            }
         }
+
+        const noBtn = document.getElementById('noBtn');
+
+        function dodge() {
+            noBtn.style.position = 'fixed';
+            noBtn.style.zIndex = '99999';
+            noBtn.style.transition = 'all 0.3s ease';
+
+            const safeW = window.innerWidth - noBtn.offsetWidth - 20;
+            const safeH = window.innerHeight - noBtn.offsetHeight - 20;
+
+            const x = Math.max(10, Math.random() * safeW);
+            const y = Math.max(10, Math.random() * safeH);
+
+            noBtn.style.left = x + 'px';
+            noBtn.style.top = y + 'px';
+            noBtn.innerText = 'Please? 🥺';
+        }
+
+        noBtn.addEventListener('mouseover', dodge);
+        noBtn.addEventListener('touchstart', function (e) {
+            e.preventDefault();
+            dodge();
+        }, { passive: false });
+
+        function showThanks() {
+            document.getElementById('askSection').style.display = 'none';
+            document.getElementById('thankSection').style.display = 'flex';
+        }
+
+        mq.addEventListener('change', () => {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('turn');
+                page.style.opacity = '';
+                page.style.display = '';
+                page.style.zIndex = '';
+            });
+            document.getElementById('p1').style.zIndex = '6';
+            document.getElementById('p2').style.zIndex = '5';
+            document.getElementById('p3').style.zIndex = '4';
+            document.getElementById('p4').style.zIndex = '2';
+            currentMobile = 1;
+        });
     </script>
 </body>
 </html>
